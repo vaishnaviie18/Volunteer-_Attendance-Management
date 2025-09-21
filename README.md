@@ -28,17 +28,7 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<div align="center">
 
-<h3 align="center">College Attendance Management System</h3>
-
-  <p align="center">
-    <br />
-    <a href="https://github.com/manishkumar-hub/The-craft-House/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/manishkumar-hub/The-craft-House/issues">Request Feature</a>
-  </p>
-</div>
 
 
 
@@ -61,8 +51,7 @@
       </ul>
     </li>
     <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
+    
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
@@ -161,18 +150,6 @@ Don't forget to give the project a star! Thanks again!
 
 
 
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
-<!-- CONTACT -->
-## Contact
-
-Email  -  <a href="mailto:manishkumarpandit12@gmail.com">Manish </a>
-
-<p align="right">(<a href="#top">back to top</a>)</p>
