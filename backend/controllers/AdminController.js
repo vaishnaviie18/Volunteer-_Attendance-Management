@@ -1,163 +1,223 @@
-// import conn from '../config/conn.'
 var mysql = require('mysql');
 require('dotenv').config();
 var connection = require('../config/conn')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const USERNAME = "admin";
-const PWD = "admin";
 const secretKey = process.env.SECRET_KEY;
 
-module.exports.loginAdmin = async (req, res) => {
-    console.log("Inside Controller")
-    const { username, password } = req.body;
-    console.log("req body : ", req.body);
-    if (username == USERNAME && password == PWD) {
-        // const resData = JSON.stringify(response[0]);
-        var token = jwt.sign(req.body, secretKey);
-        return res.status(200).json({ "msg": "Logged in succesfully!!.", "data": token })
-    }
-    else
-    {
-        return res.status(203).json({ "msg": "Invalid Credentials" })
-    }
-}
+module.exports.registerAdmin = async (req, res) => {
+    try {
+        console.log("👨‍💼 Inside Admin Registration Controller");
+        const { name, email, contact, branch, password } = req.body;
+        
+        const [existingAdmins] = await connection.execute(
+            'SELECT * FROM admins WHERE email = ?', 
+            [email]
+        );
 
-module.exports.addSubject = async (req, res) => {
-    console.log("Inside Controller")
-    const { code } = req.body;
-    console.log("req body : ", req.body);
-    connection.query('SELECT * FROM subjects WHERE code = ?', code, async (err, response) => {
-        console.log("Response : ", response);
-        if (response.length > 0) {
-            return res.status(203).json({ "msg": "Subject is already Added." })
-        }
-        else {
-            connection.query('INSERT INTO subjects SET ?', req.body, (err, response) => {
-                if (err) {
-                    console.log("Insert Error: ", err);
-                }
-                else {
-                    console.log("Res: ", response);
-                }
+        if (existingAdmins.length > 0) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Admin is already registered." 
             });
-            console.log("res: ", response);
-            return res.status(200).json({ "res": response, "msg": "Added succesfully!!" });
         }
-    })
-}
-module.exports.updateSubject = async (req, res) => {
-    // console.log("Inside Controller")
-    const updatedSubj = req.body;
-    // console.log("req body : ", updatedSubj);
-    var query = `UPDATE subjects SET code='${updatedSubj.code}',name='${updatedSubj.name}', course='${updatedSubj.course}', branch='${updatedSubj.branch}' ,semester='${updatedSubj.semester}', year='${updatedSubj.year}' , teacher_id='${updatedSubj.teacher_id}'  WHERE id='${updatedSubj.id}' `; 
-    console.log("upd query : ",query);
-    connection.query(query, async (err, response) => {
-        console.log("Response : ", response);
-        // if (response.length > 0) {
-            return res.status(200).json({ "msg": "Subject updated succesfully!" })
-        // }
-        // else {
-            // connection.query('INSERT INTO subjects SET ?', req.body, (err, response) => {
-            //     if (err) {
-            //         console.log("Insert Error: ", err);
-            //     }
-            //     else {
-            //         console.log("Res: ", response);
-            //     }
-            // });
-            // console.log("res: ", response);
-            return res.status(203).json({ "msg": "Oops!! Try again!" });
-        // }
-    })
-}
-module.exports.deleteSubject = async (req, res) => {
-    console.log("Inside Controller",req.body)
-    // const updatedSubj = req.body;
-    // console.log("req body : ", updatedSubj);
-    var query = `DELETE FROM subjects WHERE id='${req.body.id}' `; 
-    console.log("Delete query : ",query);
-    connection.query(query, async (err, response) => {
-        console.log("Response : ", response);
-        // if (response.length > 0) {
-            return res.status(200).json({ "msg": "Subject deleted succesfully!" })
-        // }
-        // else {
-            // connection.query('INSERT INTO subjects SET ?', req.body, (err, response) => {
-            //     if (err) {
-            //         console.log("Insert Error: ", err);
-            //     }
-            //     else {
-            //         console.log("Res: ", response);
-            //     }
-            // });
-            // console.log("res: ", response);
-            return res.status(203).json({ "msg": "Oops!! Try again!" });
-        // }
-    })
-}
-module.exports.getAllSubj = async (req, res) => {
-    console.log("Inside Controller")
-    // const { code } = req.body;
-    console.log("req body : ", req.body);
-    connection.query('SELECT * FROM subjects ', async (err, response) => {
-        console.log("Response : ", response);
-        if (response.length > 0) {
-            return res.status(200).json({"data": response} )
-        }
-        else {
-            return res.status(203).json({ "res": response, "msg": "No Subjects Found!" });
-        }
-    })
-}
-module.exports.getStudentsByCourseAndyear = async (req, res) => {
-    console.log("Inside Controller")
-    const { course , year , branch } = req.body;
-    console.log("req body : ", req.body);
-    var query = `SELECT * FROM student WHERE course='${course}' AND year= '${year}' AND branch='${branch}' `; 
-    console.log(" get stud query : ",query)
-    connection.query(query, async (err, response) => {
-        console.log("Response : ", response);
-        if (response.length > 0) {
-            return res.status(200).json({"data": response} )
-        }
-        else {
-            return res.status(203).json({ "res": response, "msg": "No students Found!" });
-        }
-    })
-}
 
-module.exports.getAllTeachers = async (req, res) => {
-    // console.log("Inside Controller")
-    // const { course , year , branch } = req.body;
-    // console.log("req body : ", req.body);
-    var query = `SELECT * FROM teacher `; 
-    console.log(" get teacher query : ",query)
-    connection.query(query, async (err, response) => {
-        console.log("Response : ", response);
-        if (response.length > 0) {
-            return res.status(200).json({"data": response} )
-        }
-        else {
-            return res.status(203).json({ "res": response, "msg": "No proffesors Found!" });
-        }
-    })
-}
+        const salt = await bcrypt.genSaltSync(10);
+        const hashedPwd = await bcrypt.hash(password, salt);
+        
+        const query = `INSERT INTO admins 
+                      (name, email, contact, branch, password, role) 
+                      VALUES (?, ?, ?, ?, ?, ?)`;
+        
+        const [result] = await connection.execute(query, [
+            name, email, contact, branch, hashedPwd, 'admin'
+        ]);
 
-module.exports.getSubjByCourseAndyear = async (req, res) => {
-    console.log("Inside Controller")
-    const { course, year } = req.body;
-    console.log("req body : ", req.body);
-    var quer = `SELECT * FROM subjects WHERE  course = '${course}' AND year = '${year}' `;
-    console.log("quer: ",quer)
-    connection.query(quer, async (err, response) => {
-        console.log("Response : ", response);
-        if (response) {
-            return res.status(200).json({ "data": response })
+        console.log("✅ Admin registered successfully with ID:", result.insertId);
+        
+        const adminData = { name, email, contact, branch, role: 'admin' };
+        const token = jwt.sign(adminData, secretKey);
+        
+        return res.status(200).json({ 
+            success: true,
+            message: "Admin Registered Successfully!",
+            data: {
+                token: token,
+                admin: adminData
+            }
+        });
+
+    } catch (error) {
+        console.log("❌ Database Error in registerAdmin:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Registration failed. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+module.exports.loginAdmin = async (req, res) => {
+    try {
+        console.log("🔐 Inside Admin Login Controller");
+        const { email, password } = req.body;
+        
+        const [admins] = await connection.execute(
+            'SELECT * FROM admins WHERE email = ?', 
+            [email]
+        );
+
+        if (admins.length === 0) {
+            return res.status(401).json({ 
+                success: false,
+                message: "Admin not registered!" 
+            });
         }
-        else {
-            return res.status(203).json({ "res": response, "msg": "No Subjects Found!" });
+
+        const admin = admins[0];
+        const pwdCheck = await bcrypt.compare(password, admin.password);
+        
+        if (!pwdCheck) {
+            return res.status(401).json({ 
+                success: false,
+                message: "Invalid Credentials" 
+            });
         }
-    })
-}
+
+        const { password: _, ...adminData } = admin;
+        const token = jwt.sign(adminData, secretKey);
+        
+        console.log("✅ Admin logged in successfully:", email);
+        
+        return res.status(200).json({ 
+            success: true,
+            message: "Logged in successfully!", 
+            data: {
+                token: token,
+                admin: adminData
+            }
+        });
+
+    } catch (error) {
+        console.log("❌ Database Error in loginAdmin:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Login failed. Please try again.",
+            error: error.message
+        });
+    }
+};
+
+module.exports.getAdmins = async (req, res) => {
+    try {
+        console.log("📋 Inside Get Admins");
+        
+        const [admins] = await connection.execute(
+            'SELECT id, name, email, contact, branch, role, created_at FROM admins'
+        );
+
+        return res.status(200).json({ 
+            success: true,
+            data: admins 
+        });
+
+    } catch (error) {
+        console.log("❌ Database Error in getAdmins:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Error fetching admins",
+            error: error.message
+        });
+    }
+};
+
+module.exports.updateAdminRole = async (req, res) => {
+    try {
+        console.log("⚙️ Inside Update Admin Role");
+        const { adminId, role } = req.body;
+        
+        // Check if the requester is a super_admin
+        const requesterAdminId = req.admin.id; // Assuming we have admin data in req from middleware
+        const [requester] = await connection.execute(
+            'SELECT role FROM admins WHERE id = ?', 
+            [requesterAdminId]
+        );
+
+        if (requester.length === 0 || requester[0].role !== 'super_admin') {
+            return res.status(403).json({ 
+                success: false,
+                message: "Only super admins can update roles" 
+            });
+        }
+        
+        await connection.execute(
+            'UPDATE admins SET role = ? WHERE id = ?', 
+            [role, adminId]
+        );
+
+        console.log("✅ Admin role updated successfully");
+        
+        return res.status(200).json({ 
+            success: true,
+            message: "Role updated successfully!" 
+        });
+
+    } catch (error) {
+        console.log("❌ Database Error in updateAdminRole:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Error updating role",
+            error: error.message
+        });
+    }
+};
+
+module.exports.deleteAdmin = async (req, res) => {
+    try {
+        console.log("🗑️ Inside Delete Admin");
+        const { adminId } = req.body;
+        
+        // Check if the requester is a super_admin
+        const requesterAdminId = req.admin.id;
+        const [requester] = await connection.execute(
+            'SELECT role FROM admins WHERE id = ?', 
+            [requesterAdminId]
+        );
+
+        if (requester.length === 0 || requester[0].role !== 'super_admin') {
+            return res.status(403).json({ 
+                success: false,
+                message: "Only super admins can delete admins" 
+            });
+        }
+        
+        // Prevent self-deletion
+        if (requesterAdminId == adminId) {
+            return res.status(400).json({ 
+                success: false,
+                message: "You cannot delete your own account" 
+            });
+        }
+        
+        await connection.execute(
+            'DELETE FROM admins WHERE id = ?', 
+            [adminId]
+        );
+
+        console.log("✅ Admin deleted successfully");
+        
+        return res.status(200).json({ 
+            success: true,
+            message: "Admin deleted successfully!" 
+        });
+
+    } catch (error) {
+        console.log("❌ Database Error in deleteAdmin:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Error deleting admin",
+            error: error.message
+        });
+    }
+};

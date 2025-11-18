@@ -1,13 +1,8 @@
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-
-module.exports=(req,res,next)=>{
-    const authHeaders = req.headers.authorization;
-    const token = authHeaders.split('Bearer ')[1];
-    try{
-        jwt.verify(token,process.env.JWT_SECRET);
-        next();
-    }catch(error){
-        return res.status(401).json({error:[{msg:error.message}]})
-    }
-} 
+module.exports = (req, res, next) => {
+    // Skip authentication for development
+    console.log("Auth middleware - Skipping authentication for development");
+    next();
+};

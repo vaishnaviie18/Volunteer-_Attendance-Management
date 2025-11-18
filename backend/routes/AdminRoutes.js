@@ -1,17 +1,20 @@
 const app = require('express');
 const router = app.Router();
-const { loginAdmin,addSubject,getAllSubj ,getSubjByCourseAndyear , updateSubject,deleteSubject, getStudentsByCourseAndyear,getAllTeachers} = require('../controllers/AdminController');
+const { 
+    registerAdmin, 
+    loginAdmin, 
+    getAdmins,
+    updateAdminRole,
+    deleteAdmin
+} = require('../controllers/AdminController');
 const bodyParser = require('body-parser');
+const Auth = require('../utills/Auth');
 
-
-// console.log("Reg stud: ",registerStudent)
 router.use(bodyParser.urlencoded({ extended: false }))
-router.post('/loginAdmin',loginAdmin);
-router.post('/addSubj',addSubject);
-router.delete('/deleteSubj',deleteSubject);
-router.post('/updateSubj',updateSubject);
-router.post('/getAllSubj',getAllSubj);
-router.post('/getStudentsCourseAndyear',getStudentsByCourseAndyear);
-router.post('/getSubjByCourseAndyear',getSubjByCourseAndyear);
-router.post('/getTeachers',getAllTeachers);
-module.exports=router;
+router.post('/registerAdmin', registerAdmin);
+router.post('/loginAdmin', loginAdmin);
+router.post('/getAdmins', Auth, getAdmins);
+router.post('/updateAdminRole', Auth, updateAdminRole);
+router.post('/deleteAdmin', Auth, deleteAdmin);
+
+module.exports = router;
